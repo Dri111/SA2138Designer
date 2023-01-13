@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Third</title>
+    <script type="text/javascript" src="../three.js-master/build/three.js"></script>
+    <script type="text/javascript" src="../three.js-master/examples/js/controls/TrackballControls.js"></script>
+    <script src="../three.js-master/examples/js/loaders/OBJLoader.js"></script>
+    <script src="../three.js-master/examples/js/loaders/MTLLoader.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="Stats-output">
+    </div>
+    <!-- Div which will hold the Output -->
+    <div id="WebGL-output">
+    </div>
+    <div>
+        <div class="ui sub">
+            <table id="select-portid">
+                <tr id="idsel-box">
+                </tr>
+            </table>
+        </div>
+        <div class="ui" id="ui-menu">
+            <div class="ui sub" id="menu-selection-ui" style="float:left;">
+                <button class="button-sel" id="payload-sel">Payloads</button>
+                <button class="button-sel" id="2nd-sel">2nd Stages</button>
+            </div>
+            <div class="ui sub menu2" id="menu-payload-ui" style="float:right">
+                <table>
+                    <tr>
+                        <td><button class="select-module" id="select-hub" value="Hub">Hub</button></td>
+                        <td><button class="select-module" id="select-corridor" value="Corridor">Corridor</button></td>
+                        <td><button class="select-module" id="select-builder" value="Builder">Builder</button></td>
+                        <td><button class="select-module" id="select-tug" value="Tug">Tug</button></td>
+                        <td><button class="select-module" id="select-crewhabit" value="Crew Habit">Crew Habit</button>
+                        </td>
+                        <td><button class="select-module" id="select-fuelsilosmall" value="Fuel Silo Small">Fuel Silo
+                                Small</button></td>
+                    </tr>
+                    <tr>
+                        <td><button class="select-module" id="select-caretaker" value="Caretaker">Caretaker</button>
+                        </td>
+                        <td><button class="select-module" id="select-solarpanel" value="Solar Panel">Solar
+                                Panel</button></td>
+                        <td><button class="select-module" id="select-jumpgate" value="Jump Gate">Jump Gate</button></td>
+                        <td><button class="select-module" id="select-nucleargenerator" value="Nuclear Generator">Nuclear
+                                Generator</button></td>
+                        <td><button class="select-module" id="select-solarsquare" value="Solar Square">Solar
+                                Square</button></td>
+                        <td><button class="select-module" id="select-hydroponicsmodule"
+                                value="Hydroponics Module">Hydroponics Module</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="ui sub menu2" id="menu-2nd-ui" style="float:right" hidden>
+            </div>
+        </div>
+    </div>
+    <style>
+        body {
+            height: 100%;
+            margin: 0;
+            background-color: black;
+            display: flex;
+            color: white;
+            flex-flow: column;
+        }
+
+        div.ui {
+            width: 100%;
+            border: 2px solid cyan;
+        }
+
+        div#WebGL-output {
+            flex: 0 1 auto;
+        }
+
+        div#ui-menu {
+            flex: 1 1 auto;
+            display: flex;
+        }
+
+        div#menu-selection-ui {
+            margin: 0;
+            width: 200px;
+            height: 100%;
+        }
+
+        div.menu2 {
+            flex-grow: 1;
+        }
+
+        div.sub {
+            height: 100%;
+        }
+
+        button {
+            margin: 0;
+            border: none;
+            appearance: none;
+            display: block;
+            background: cyan;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: skyblue;
+        }
+
+        button:active {
+            background-color: blue;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            display: block;
+            border: 2px solid cyan;
+        }
+
+        table#select-partid td {
+            margin: 0;
+        }
+    </style>
+    <!-- Javascript code that runs our Three.js examples -->
+    <script type="text/javascript" src="./app.js"></script>
+</body>
+
+</html>
