@@ -27,14 +27,11 @@ function v3(x, y, z) {
 function init() {
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    let objLoader= new THREE.OBJLoader();
-    objLoader.load("./Hub.obj",function(mesh){
-        let material=new THREE.MeshBasicMaterial({color:0xffffff});
-        console.log(mesh);
-    })
+    let objLoader = new THREE.OBJLoader();
+    let mtlLoader = new THREE.MTLLoader();
     const _q1 = new THREE.Quaternion();
 
-    class Part extends THREE.Mesh {
+    class Part {
         static partList = {
             Hub: {
                 name: "Hub",
@@ -61,6 +58,36 @@ function init() {
                 ],
             }
         }
+        static _loadModule(name) {
+            mtlLoader.setPath("./asset/");
+            mtlLoader.load(Part.partList[name].M, (material) => {
+                material.preload();
+                objLoader.setMaterials(material);
+                objLoader.setPath("./asset/");
+                objLoader.load(Part.partList[name].G, (object) => {
+                    Part.partList[name].mesh=object.children[0].clone();
+                },
+                    (xhr) => {
+                        console.log(`Loading OBJ of ${name}`, xhr);
+                    },
+                    (error) => {
+                        console.error("Error has Occured : ", error);
+                    }
+                )
+            },
+                (xhr) => {
+                    console.log(`Loading MTL of ${name}`, xhr);
+                },
+                (error) => {
+                    console.error("Error has Occured : ", error);
+                }
+            )
+        }
+        static init() {
+            for (const moduleName of Object.keys(Part.partList)) {
+                Part._loadModule(moduleName);
+            }
+        }
         /**
          * 
          * @param {string} partName module name. ex)Corridor
@@ -68,17 +95,16 @@ function init() {
          * @param {string} name name of this part. Default will 10-length random characters.
          */
         constructor(partName, connected, name = randomName()) {
-            this.mesh =
-                super(Part.partList[partName].G.clone(), Part.partList[partName].M.clone());
+            this.mesh = Part.partList[partName].mesh.clone();
             //super(new THREE.BoxGeometry(1, 1, 1),  new THREE.MeshLambertMaterial({ color: Math.floor(Math.random() * 0xffffff) }));
-            this.material.wireframe = true;
+            this.mesh.material.wireframe = true;
             //this.material.uniformsNeedUpdate=true;
             //this.material.needsUpdate=true;
             this.partInfo = Part.partList[partName];
             this.connected = [];
             this.name = name;
             this.port = [];
-            scene.add(this);
+            scene.add(this.mesh);
             for (let i = 0; i < Part.partList[partName].portPD.length; i++) {
                 this.connected.push(-1);
                 this.port[i] = new AttachNode(this, scene, i);
@@ -105,7 +131,7 @@ function init() {
             }
         }
     }
-
+    Part.init();
     class AttachNode extends THREE.Mesh {
         //static ATG = new THREE.OctahedronGeometry(0.4);
         //static ATT = new THREE.MeshBasicMaterial({ color: 0xffff00 })
@@ -163,7 +189,7 @@ function init() {
             this.visible = !this.isOccupied;
         }
         recalibrate() {
-            this.position.addVectors(this.part.position, this.v);
+            this.position.addVectors(this.part.mesh.position, this.v);
             for (let i = 0; i < 3; i++) {
                 let v = this.u.getComponent(i)
                 if (Math.abs(v - Math.round(v)) < 1E-10) {
@@ -182,7 +208,7 @@ function init() {
         rotate(quaternion) {
             this.v.applyQuaternion(quaternion);
             this.u.applyQuaternion(quaternion);
-            this.position.addVectors(this.part.position, this.v)
+            this.position.addVectors(this.part.mesh.position, this.v)
             for (let i = 0; i < 3; i++) {
                 let v = this.position.getComponent(i)
                 if (Math.abs(v - Math.round(v)) < 1E-10) {
@@ -201,6 +227,9 @@ function init() {
             G: null,
             M: null,
             portPD: [Port(v3(0, 0, 0), v3(1, 0, 0))]
+        }
+        static mesh={
+            position:v3(0,0,0)
         }
         static port = new AttachNode(this, scene, 0)
     }
@@ -252,19 +281,21 @@ function init() {
     renderer.setClearColor(new THREE.Color(0x000000));
     renderer.setSize(window.innerWidth, window.innerHeight * 0.9);
     renderer.shadowMapEnabled = true;
-
+    document.getElementById('WebGL-output').appendChild(renderer.domElement)
     camera.position.set(10, 10, 10);
     camera.lookAt(scene.position);
 
-    var trackballControls = new THREE.TrackballControls(camera);
-    trackballControls.rotateSpeed = 1.0;
-    trackballControls.zoomSpeed = 3.0;
-    trackballControls.panSpeed = 1.0;
-    trackballControls.staticMoving = true;
+
+    let controls = new THREE.TrackballControls( camera, renderer.domElement );
+
+    controls.rotateSpeed = 1.0;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
+    controls.staticMoving=true;
     var clock = new THREE.Clock();
     function render() {
         var delta = clock.getDelta();
-        trackballControls.update(delta);
+        controls.update(delta);
         requestAnimationFrame(render);
         renderer.render(scene, camera);
     }
@@ -302,7 +333,7 @@ function init() {
         if ($$$.selectedName != "" && $$$.attachNodeList[$$$.selectedName].selected == 1) {
             let npart = new Part($$$.selectedModule, $$$.attachNodeList[$$$.selectedName]);
             if ($$$.attachNodeList[$$$.selectedName].isRoot) {
-                scene.add(npart);
+                scene.add(npart.mesh);
             }
             else {
                 //Original port
@@ -318,15 +349,15 @@ function init() {
                     u1 = u1.negate().angleTo(u2);
                     _q1.setFromAxisAngle(rotA, u1);
                     npart.rotate(_q1);
-                    npart.applyQuaternion(_q1);
+                    npart.mesh.applyQuaternion(_q1);
                 }
                 else if (u1.equals(u2)) {
                     _q1.setFromUnitVectors(u1, u2.negate());
                     npart.rotate(_q1);
-                    npart.applyQuaternion(_q1)
+                    npart.mesh.applyQuaternion(_q1)
                 }
                 //originalPort.position+newPort.v.negate();
-                npart.position.addVectors(originalPort.position, newPort.v.clone().negate());
+                npart.mesh.position.addVectors(originalPort.position, newPort.v.clone().negate());
                 console.log(npart.position.toString())
                 npart.recalibrate();
                 $$$.connectMod(originalPort.part, npart, originalPort.pid, $$$.selectedPortID);
@@ -360,7 +391,7 @@ function init() {
     light.position.set(100, 100, 100);
     scene.add(light);
 
-    document.getElementById('WebGL-output').appendChild(renderer.domElement)
+
     renderer.render(scene, camera);
 
 }
