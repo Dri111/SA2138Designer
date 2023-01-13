@@ -53,8 +53,8 @@ function init() {
                 M: "./Station_Module.mtl",
                 portAmount: 2,
                 portPD: [
-                    Port(v3(-1, 0, 0), v3(-1, 0, 0)),
-                    Port(v3(1, 0, 0), v3(1, 0, 0)),
+                    Port(v3(-0.581891, 0, 0), v3(-1, 0, 0)),
+                    Port(v3(0.581891, 0, 0), v3(1, 0, 0)),
                 ],
             }
         }
@@ -97,7 +97,7 @@ function init() {
         constructor(partName, connected, name = randomName()) {
             this.mesh = Part.partList[partName].mesh.clone();
             //super(new THREE.BoxGeometry(1, 1, 1),  new THREE.MeshLambertMaterial({ color: Math.floor(Math.random() * 0xffffff) }));
-            this.mesh.material.wireframe = true;
+            this.mesh.wireframe = true;
             //this.material.uniformsNeedUpdate=true;
             //this.material.needsUpdate=true;
             this.partInfo = Part.partList[partName];
@@ -124,11 +124,11 @@ function init() {
             for (const port of this.port) {
                 port.recalibrate();
             }
-            for (let i = 0; i < Part.partList[partName].portPD.length; i++) {
+            /**for (let i = 0; i < Part.partList[partName].portPD.length; i++) {
                 if (this.name != "root") {
                     this.port[i].visualize();
                 }
-            }
+            }*/
         }
     }
     Part.init();
@@ -358,7 +358,6 @@ function init() {
                 }
                 //originalPort.position+newPort.v.negate();
                 npart.mesh.position.addVectors(originalPort.position, newPort.v.clone().negate());
-                console.log(npart.position.toString())
                 npart.recalibrate();
                 $$$.connectMod(originalPort.part, npart, originalPort.pid, $$$.selectedPortID);
             }
