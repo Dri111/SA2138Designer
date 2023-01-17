@@ -25,11 +25,15 @@
     <div id="WebGL-output">
     </div>
     <div>
-        <div class="ui sub">
+        <div class="ui sub" id="upper-ui">
             <table id="select-portid">
                 <tr id="idsel-box">
                 </tr>
             </table>
+            <div id="angle-ui"><input type="range" min="0" max="100" id="angle-range"><span id="angle-text"></span></div>
+            <div id="buttons">
+                <button id="button-blueprint">Blueprint</button>
+            </div>
         </div>
         <div class="ui" id="ui-menu">
             <div class="ui sub" id="menu-selection-ui" style="float:left;">
@@ -39,7 +43,7 @@
             <div class="ui sub menu2" id="menu-payload-ui" style="float:right">
                 <table>
                     <tr>
-                        <td><button class="select-module" id="select-hub" value="Hub">Hub</button></td>
+                        <td><button class="select-module" id="select-hub" value="Hub" state="selected">Hub</button></td>
                         <td><button class="select-module" id="select-corridor" value="Corridor">Corridor</button></td>
                         <td><button class="select-module" id="select-builder" value="Builder">Builder</button></td>
                         <td><button class="select-module" id="select-tug" value="Tug">Tug</button></td>
@@ -125,12 +129,25 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            display: block;
+            display:block;
             border: 2px solid cyan;
+        }
+        div#upper-ui{
+            display:grid;
+            gap:0px;
+        }
+        table#select-partid{
+            width:30%;
+            grid-column: 1;
+            grid-row: 1;
         }
 
         table#select-partid td {
             margin: 0;
+        }
+        div#angle-ui{
+            grid-column:2;
+            grid-row:1;
         }
     </style>
     <!-- Javascript code that runs our Three.js examples -->
