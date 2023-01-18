@@ -35,20 +35,57 @@ function init() {
     let objLoader = new THREE.OBJLoader();
     let mtlLoader = new THREE.MTLLoader();
     const _q1 = new THREE.Quaternion();
+    /**@type {Part} */
     let RootPart;
     let partLoadingN = 3;
 
     let $$$ = {
         W: window.innerWidth,
         H: window.innerHeight * 0.9,
+        nMID:-1,
         partN: 0,
         selectedName: "",
         selectedModule: "Hub",
         selectedPortID: 0,
         rotation: 0,
+        /**@type {Part} */
+        firstModule:undefined,
         part: {},
-        tree: (part) => {
-            return
+        _treeBuf:[],
+        tree: () => {
+            $$$._treeBuf=[];
+            $$$._treeBuf.push(
+                `module,0,${$$$.firstModule.partInfo.id}
+name,${$$$.firstModule.name}
+dock,${RootPart.port[0].connected.pid},builder
+lights_int,1.0,1.0,1.0
+lights_ext,1.0,1.0,1.0`
+            )
+            $$$.firstModule.visited=1;
+            for(const port of $$$.firstModule.port){
+                if(port.isOccupied && port.connected.part.visited==0){
+                    $$$._tree(port);
+                }
+            }
+            $$$.firstModule.visited=0;
+            return $$$._treeBuf.join(`\n********\n`);
+        },
+        _tree:(hostPort)=>{
+            hostPort.connected.part.visited=1;
+            $$$._treeBuf.push(
+                `module,${hostPort.connected.part.MID},${hostPort.connected.part.partInfo.id}
+name,${hostPort.connected.part.name}
+dock,${hostPort.connected.pid},${hostPort.part.MID},${hostPort.pid},${hostPort._rotation}
+lights_int,1.0,1.0,1.0
+lights_ext,1.0,1.0,1.0`
+            )
+            for(const port of hostPort.connected.part.port){
+                if(port.isOccupied && port.connected.part.visited==0){
+                    $$$._tree(port);
+                }
+            }
+            //
+            hostPort.connected.part.visited=0;
         },
         nodePart: null,
         attachNodeList: { root_0: null },
@@ -70,6 +107,7 @@ function init() {
     class Part {
         static partList = {
             RootPartBuilder: {
+                id:-1,
                 name: "RootPartBuilder",
                 G: "./RootPart.obj",
                 M: "./RootPart.mtl",
@@ -79,6 +117,7 @@ function init() {
                 ]
             },
             Hub: {
+                id:2,
                 name: "Hub",
                 G: "./Hub.obj",
                 M: "./Hub.mtl",
@@ -93,6 +132,7 @@ function init() {
                 ],
             },
             Corridor: {
+                id:3,
                 name: "Corridor",
                 G: "./Station_Module.obj",
                 M: "./Station_Module.mtl",
@@ -117,6 +157,7 @@ function init() {
                         $$$.attachNodeList.root_0 = RootPart.port[0];
                         $$$.attachNodeArray.push(RootPart.port[0]);
                         RootPart.port[0].makeRoot();
+                        RootPart.visited=true;
                     }
                 },
                     (xhr) => {
@@ -149,14 +190,17 @@ function init() {
          */
         constructor(partName, connected, name = randomName()) {
             this.mesh = Part.partList[partName].mesh.clone();
+            this.MID=$$$.nMID++;
             //super(new THREE.BoxGeometry(1, 1, 1),  new THREE.MeshLambertMaterial({ color: Math.floor(Math.random() * 0xffffff) }));
             this.mesh.wireframe = true;
             //this.material.uniformsNeedUpdate=true;
             //this.material.needsUpdate=true;
             this.partInfo = Part.partList[partName];
+            /**@type {Part[]} */
             this.connected = [];
             this.name = name;
             this.visited = false;
+            /**@type {AttachNode[]} */
             this.port = [];
             scene.add(this.mesh);
             for (let i = 0; i < Part.partList[partName].portPD.length; i++) {
@@ -192,6 +236,12 @@ function init() {
     class AttachNode extends THREE.Mesh {
         //static ATG = new THREE.OctahedronGeometry(0.4);
         //static ATT = new THREE.MeshBasicMaterial({ color: 0xffff00 })
+        /**
+         * 
+         * @param {Part} part 
+         * @param {THREE.Scene} scene 
+         * @param {Number} portID 
+         */
         constructor(part, scene, portID) {
             super(new THREE.OctahedronGeometry(0.2), new THREE.MeshBasicMaterial());
             this.pid = portID;
@@ -203,6 +253,7 @@ function init() {
             this.selected = 0;
             this.isAttachNode = 1;
             this.isOccupied = false;
+            this._rotation = NaN;
             this.part = part;
             this.isRoot = false;
             this.connected = null;
@@ -214,7 +265,7 @@ function init() {
 
         }
         calcColor() {
-            return new THREE.Color(`hsl(${this.pid * 60},100%,50%)`)
+            return new THREE.Color(`hsl(${this.pid * 30},100%,50%)`)
         }
         visualize() {
             let uviewer = new THREE.ArrowHelper(this.u, this.position, 0.5);
@@ -257,6 +308,7 @@ function init() {
         connect(atNode) {
             this.isOccupied = true;
             this.connected = atNode;
+            this._rotation = $$$.rotation;
         }
         makeRoot() {
             this.isRoot = true;
@@ -266,13 +318,7 @@ function init() {
             this.v.applyQuaternion(quaternion);
             this.u.applyQuaternion(quaternion);
             this.r.applyQuaternion(quaternion);
-            this.position.addVectors(this.part.mesh.position, this.v)
-            for (let i = 0; i < 3; i++) {
-                let v = this.position.getComponent(i)
-                if (Math.abs(v - Math.round(v)) < 1E-10) {
-                    this.position.setComponent(i, Math.round(v))
-                }
-            }
+            this.recalibrate();
         }
     }
 
@@ -307,11 +353,18 @@ function init() {
                 }
             }
             $UI.range.rotation.addEventListener('input', () => {
-                $$$.rotation = $UI.range.rotation.value;
+                $$$.rotation = parseFloat($UI.range.rotation.value);
                 $UI.text.rotation.innerText = `${$$$.rotation}˚`
             })
             $UI.button.blueprint.addEventListener('click', () => {
-
+                if ($$$.partN > 0) {
+                    alert("Copy Below: \n"+ 
+                    $$$.tree()
+                    );
+                }
+                else {
+                    alert("No part to write blueprint.")
+                }
             })
         },
         selectButtonID: () => {
@@ -381,50 +434,55 @@ function init() {
         }
         if ($$$.selectedName != "") $$$.attachNodeList[$$$.selectedName].updateMat();
     }
-
-    var clickEvent = (e) => {
+    /**
+     * Function for adding new module if available AttachNode is clicked.
+     */
+    var clickEvent = () => {
         if ($$$.selectedName != "" && $$$.attachNodeList[$$$.selectedName].selected == 1) {
             let npart = new Part($$$.selectedModule, $$$.attachNodeList[$$$.selectedName]);
-
-                //Original port
-                let originalPort = $$$.attachNodeList[$$$.selectedName]
-                //new port
-                let newPort = npart.port[$$$.selectedPortID];
-                originalPort.recalibrate();
-                let u1 = originalPort.u.clone();
-                let u2 = newPort.u.clone();
-                let rotA = u1.clone().cross(u2);
-                //console.log(originalPort.pid)
-                if (!(rotA.x == 0 && rotA.y == 0 && rotA.z == 0)) {
-                    u1 = u1.negate().angleTo(u2);
-                    _q1.setFromAxisAngle(rotA, u1);
-                    npart.rotate(_q1);
-                    npart.mesh.applyQuaternion(_q1);
-                }
-                else if (u1.equals(u2)) {
-                    _q1.setFromUnitVectors(u1, u2.negate());
-                    npart.rotate(_q1);
-                    npart.mesh.applyQuaternion(_q1)
-                }
-
-                npart.recalibrate();
-                u1 = originalPort.r.angleTo(newPort.r);
-                //console.log(u1)
-                if (isParallelTo(originalPort.r, newPort.r)) {
-                    rotA = newPort.u
-                } else {
-                    rotA = originalPort.r.clone().cross(newPort.r);
-                }
-                u1 = Math.PI - u1 + $$$.rotation
+            $$$.partN++;
+            //Original port
+            let originalPort = $$$.attachNodeList[$$$.selectedName]
+            //new port
+            let newPort = npart.port[$$$.selectedPortID];
+            originalPort.recalibrate();
+            let u1 = originalPort.u.clone();
+            let u2 = newPort.u.clone();
+            let rotA = u1.clone().cross(u2);
+            //console.log(originalPort.pid)
+            if (!(rotA.x == 0 && rotA.y == 0 && rotA.z == 0)) {
+                u1 = u1.negate().angleTo(u2);
                 _q1.setFromAxisAngle(rotA, u1);
                 npart.rotate(_q1);
                 npart.mesh.applyQuaternion(_q1);
-                //originalPort.position+newPort.v.negate();
-                npart.mesh.position.addVectors(originalPort.position, newPort.v.clone().negate());
-                npart.recalibrate();
-                npart.visualize();
-                $$$.connectMod(originalPort.part, npart, originalPort.pid, $$$.selectedPortID);
-            
+            }
+            else if (u1.equals(u2)) {
+                _q1.setFromUnitVectors(u1, u2.negate());
+                npart.rotate(_q1);
+                npart.mesh.applyQuaternion(_q1)
+            }
+
+            npart.recalibrate();
+            u1 = originalPort.r.angleTo(newPort.r);
+            //console.log(u1)
+            if (isParallelTo(originalPort.r, newPort.r)) {
+                rotA = newPort.u
+            } else {
+                rotA = originalPort.r.clone().cross(newPort.r);
+            }
+            u1 = Math.PI - u1 + $$$.rotation / 180 * Math.PI
+            _q1.setFromAxisAngle(rotA, u1);
+            npart.rotate(_q1);
+            npart.mesh.applyQuaternion(_q1);
+            //originalPort.position+newPort.v.negate();
+            npart.mesh.position.addVectors(originalPort.position, newPort.v.clone().negate());
+            npart.recalibrate();
+            npart.visualize();
+            if(originalPort.isRoot){
+                $$$.firstModule=npart;
+            }
+            $$$.connectMod(originalPort.part, npart, originalPort.pid, $$$.selectedPortID);
+
         }
     }
     function updateIDButton() {
