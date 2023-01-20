@@ -1,0 +1,15 @@
+Port::
+	portF:portS=1:0.2312593495484
+Hub::
+port:width = 0.723:1
+
+
+Corridor::
+portF:width=59.2432432432:94.50358435
+portS:slope:height=13.7:16.66986:186.9369
+portF:width:portS:slope:height = 273.9:436.9:63.34:87.23:823.13
+portpos:1.12936
+
+Builder2::
+portF:width:portS:slope:height=0.63180019:1:0.146190691:0.2277769:2.2124263
+portpos:1.26919
