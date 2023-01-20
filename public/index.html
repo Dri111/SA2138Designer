@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Third</title>
+    <script type="text/javascript" src="./threejs/three.min.js"></script>
+    <script type="text/javascript" src="./threejs/TrackballControls.js"></script>
+    <script src="./threejs/OBJLoader.js"></script>
+    <script src="./threejs/MTLLoader.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-analytics.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTjTGy9fOXH-PeiF9HF3P0AqJn7CfOdDE",
+            authDomain: "sa2138designer.firebaseapp.com",
+            projectId: "sa2138designer",
+            storageBucket: "sa2138designer.appspot.com",
+            messagingSenderId: "110807957372",
+            appId: "1:110807957372:web:c9682c2ef1be31ca2ceef9",
+            measurementId: "G-1KJPNG2N5J"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
+    <!-- Div which will hold the Output -->
+    <div id="WebGL-output">
+    </div>
+    <div>
+        <div class="ui sub" id="upper-ui">
+            <table id="select-portid">
+                <tr id="idsel-box">
+                </tr>
+            </table>
+            <div id="angle-ui"><input type="range" min="0" max="8" id="angle-range"><span id="angle-text"></span></div>
+            <div id="buttons">
+                <button id="button-blueprint">Blueprint</button>
+            </div>
+        </div>
+        <div class="ui" id="ui-menu">
+            <div class="ui sub" id="menu-selection-ui" style="float:left;">
+                <button class="button-sel" id="payload-sel">Payloads</button>
+                <button class="button-sel" id="2nd-sel">2nd Stages</button>
+            </div>
+            <div class="ui sub menu2" id="menu-payload-ui" style="float:right">
+                <table>
+                    <tr>
+                        <td><button class="select-module" id="select-hub" value="Hub" state="selected">Hub</button></td>
+                        <td><button class="select-module" id="select-corridor" value="Station Module">Station
+                                Module</button></td>
+                        <td><button class="select-module" id="select-builder" value="Builder">Builder</button></td>
+                        <td><button class="select-module" id="select-tug" value="Tug">Tug</button></td>
+                        <td><button class="select-module" id="select-crewhabit" value="Crew Habit">Crew Habit</button>
+                        </td>
+                        <td><button class="select-module" id="select-fuelsilosmall" value="Fuel Silo Small">Fuel Silo
+                                Small</button></td>
+                    </tr>
+                    <tr>
+                        <td><button class="select-module" id="select-caretaker" value="Caretaker">Caretaker</button>
+                        </td>
+                        <td><button class="select-module" id="select-solarpanel" value="Solar Panel">Solar
+                                Panel</button></td>
+                        <td><button class="select-module" id="select-jumpgate" value="Jump Gate">Jump Gate</button></td>
+                        <td><button class="select-module" id="select-nucleargenerator" value="Nuclear Generator">Nuclear
+                                Generator</button></td>
+                        <td><button class="select-module" id="select-solarsquare" value="Solar Square">Solar
+                                Square</button></td>
+                        <td><button class="select-module" id="select-hydroponicsmodule"
+                                value="Hydroponics Module">Hydroponics Module</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="ui sub menu2" id="menu-2nd-ui" style="float:right" hidden>
+            </div>
+        </div>
+        <div id="floating-ui">
+            <span id="display-partcount">0 parts</span>
+        </div>
+        <div id="blueprint-ui">
+            <textarea id="blueprint-output" cols="30" rows="10">Nothing</textarea>
+            <br><button id="blueprintoutput-cancel">Cancel</button>
+        </div>
+    </div>
+    <style>
+        body {
+            height: 100%;
+            margin: 0;
+            background-color: black;
+            display: flex;
+            color: white;
+            flex-flow: column;
+        }
+
+        div.ui {
+            width: 100%;
+            border: 2px solid cyan;
+        }
+
+        div#WebGL-output {
+            flex: 0 1 auto;
+        }
+
+        div#ui-menu {
+            flex: 1 1 auto;
+            display: flex;
+        }
+
+        div#menu-selection-ui {
+            margin: 0;
+            width: 200px;
+            height: 100%;
+        }
+
+        div.menu2 {
+            flex-grow: 1;
+        }
+
+        div.sub {
+            height: 100%;
+        }
+
+        button {
+            margin: 0;
+            border: none;
+            appearance: none;
+            display: block;
+            background: cyan;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: skyblue;
+        }
+
+        button:active {
+            background-color: blue;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            display: block;
+            border: 2px solid cyan;
+        }
+
+        div#upper-ui {
+            display: grid;
+            gap: 0px;
+        }
+
+        table#select-partid {
+            width: 30%;
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        table#select-partid td {
+            margin: 0;
+        }
+
+        div#angle-ui {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        div#buttons {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        div#floating-ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        div#blueprint-ui {
+            position: fixed;
+            display: none;
+            top: 50%;
+            left: 50%;
+        }
+
+        div#blueprint-ui textarea {
+            background-color: black;
+            color: white;
+            overflow: scroll;
+        }
+    </style>
+    <!-- Javascript code that runs our Three.js examples -->
+    <script type="text/javascript" src="./app.js"></script>
+</body>
+
+</html>
