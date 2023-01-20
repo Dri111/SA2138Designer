@@ -1,7 +1,7 @@
 function randomName() {
     let abc = "qwertyuiopasdfghjklzxcvbnm";
     let str = []
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 2; i++) {
         str.push(abc[Math.floor(Math.random() * abc.length)])
     }
     return str.join("");
@@ -24,7 +24,9 @@ function Port(v, u, r) {
     }
 }
 function isParallelTo(v1, v2) {
-    return v1.clone().normalize().equals(v2.clone().normalize())
+    v1=v1.clone().normalize();
+    v2=v2.clone().normalize();
+    return v1.equals(v2)||v1.negate().equals(v2);
 }
 function v3(x, y, z) {
     return new THREE.Vector3(x, y, z)
@@ -44,13 +46,13 @@ function init() {
         H: window.innerHeight * 0.9,
         nMID:-1,
         partN: 0,
-        selectedName: "",
+        selectedPortUUID: "",
         selectedModule: "Hub",
         selectedPortID: 0,
         rotation: 0,
         /**@type {Part} */
         firstModule:undefined,
-        part: {},
+        part: [],
         _treeBuf:[],
         tree: () => {
             $$$._treeBuf=[];
@@ -68,7 +70,7 @@ lights_ext,1.0,1.0,1.0`
                 }
             }
             $$$.firstModule.visited=0;
-            return $$$._treeBuf.join(`\n********\n`);
+            return $$$._treeBuf.join(`\n`);
         },
         _tree:(hostPort)=>{
             hostPort.connected.part.visited=1;
@@ -91,7 +93,7 @@ lights_ext,1.0,1.0,1.0`
         attachNodeList: { root_0: null },
         attachNodeArray: [],
         addNode: (node) => {
-            $$$.attachNodeList[node.name] = node;
+            $$$.attachNodeList[node.uuid] = node;
             $$$.attachNodeArray.push(node);
         },
         connectMod(m1, m2, p1ind, p2ind) {
@@ -192,7 +194,7 @@ lights_ext,1.0,1.0,1.0`
             this.mesh = Part.partList[partName].mesh.clone();
             this.MID=$$$.nMID++;
             //super(new THREE.BoxGeometry(1, 1, 1),  new THREE.MeshLambertMaterial({ color: Math.floor(Math.random() * 0xffffff) }));
-            this.mesh.wireframe = true;
+            //this.mesh.wireframe = true;
             //this.material.uniformsNeedUpdate=true;
             //this.material.needsUpdate=true;
             this.partInfo = Part.partList[partName];
@@ -255,6 +257,7 @@ lights_ext,1.0,1.0,1.0`
             this.isOccupied = false;
             this._rotation = NaN;
             this.part = part;
+            this.isSceneAddded=true;
             this.isRoot = false;
             this.connected = null;
             this.name = `${part.name}_${portID}`;
@@ -294,14 +297,29 @@ lights_ext,1.0,1.0,1.0`
             else {
                 this.material.color.setHex(0x0f0f0f)
             }
-            this.visible = !this.isOccupied;
+            if(this.isOccupied&&this.isSceneAddded){
+                this.isSceneAddded=false;
+                scene.remove(this);
+            }
+            else if(!this.isOccupied&&!this.isSceneAddded){
+                this.isSceneAddded=true;
+                scene.add(this);
+            }
         }
         recalibrate() {
             this.position.addVectors(this.part.mesh.position, this.v);
             for (let i = 0; i < 3; i++) {
                 let v = this.u.getComponent(i)
-                if (Math.abs(v - Math.round(v)) < 1E-10) {
-                    this.u.setComponent(i, Math.round(v))
+                if (Math.abs(v - Math.round(v*10e6)/10e6) < 1E-10) {
+                    this.u.setComponent(i, Math.round(v*10e6)/10e6)
+                }
+                v = this.r.getComponent(i)
+                if (Math.abs(v - Math.round(v*10e6)/10e6) < 1E-10) {
+                    this.r.setComponent(i, Math.round(v*10e6)/10e6)
+                }
+                v=this.v.getComponent(i)
+                if (Math.abs(v - Math.round(v*10e6)/10e6) < 1E-10) {
+                    this.v.setComponent(i, Math.round(v*10e6)/10e6)
                 }
             }
         }
@@ -315,6 +333,7 @@ lights_ext,1.0,1.0,1.0`
             //this.visible = false;
         }
         rotate(quaternion) {
+            this.applyQuaternion(quaternion);
             this.v.applyQuaternion(quaternion);
             this.u.applyQuaternion(quaternion);
             this.r.applyQuaternion(quaternion);
@@ -329,13 +348,21 @@ lights_ext,1.0,1.0,1.0`
         idSelectionBox: document.getElementById('idsel-box'),
         button: {
             moduleSelect: {},
-            blueprint: document.querySelector('button#button-blueprint')
+            blueprint: document.querySelector('button#button-blueprint'),
+            blueprintCancel:document.querySelector("button#blueprintoutput-cancel")
         },
         range: {
             rotation: document.querySelector('input#angle-range')
         },
         text: {
-            rotation: document.querySelector('span#angle-text')
+            rotation: document.querySelector('span#angle-text'),
+            partcount:document.querySelector('span#display-partcount')
+        },
+        uiGroup:{
+            blueprint:document.querySelector("div#blueprint-ui"),
+        },
+        textarea:{
+            blueprint:document.querySelector("textarea#blueprint-output"),
         },
         init: () => {
             $UI.range.rotation.value = 0;
@@ -353,18 +380,20 @@ lights_ext,1.0,1.0,1.0`
                 }
             }
             $UI.range.rotation.addEventListener('input', () => {
-                $$$.rotation = parseFloat($UI.range.rotation.value);
+                $$$.rotation = parseFloat($UI.range.rotation.value)*45;
                 $UI.text.rotation.innerText = `${$$$.rotation}˚`
             })
             $UI.button.blueprint.addEventListener('click', () => {
                 if ($$$.partN > 0) {
-                    alert("Copy Below: \n"+ 
-                    $$$.tree()
-                    );
+                    $UI.textarea.blueprint.innerHTML=$$$.tree();
+                    $UI.uiGroup.blueprint.style.display="block";
                 }
                 else {
                     alert("No part to write blueprint.")
                 }
+            })
+            $UI.button.blueprintCancel.addEventListener('click',()=>{
+                $UI.uiGroup.blueprint.style.display="none";
             })
         },
         selectButtonID: () => {
@@ -413,46 +442,49 @@ lights_ext,1.0,1.0,1.0`
         vector = vector.unproject(camera);
         let rc = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
         let intersects = rc.intersectObjects($$$.attachNodeArray);
-        //console.log($$$.selectedName)
+        //console.log($$$.selectedPortUUID)
         if (intersects.length > 0) {
-            if (intersects[0].object.name != $$$.selectedName) {
-                if ($$$.selectedName != "") {
-                    $$$.attachNodeList[$$$.selectedName].selected = 0;
-                    $$$.attachNodeList[$$$.selectedName].updateMat();
+            if (intersects[0].object.uuid != $$$.selectedPortUUID) {
+                if ($$$.selectedPortUUID != "") {
+                    $$$.attachNodeList[$$$.selectedPortUUID].selected = 0;
+                    $$$.attachNodeList[$$$.selectedPortUUID].updateMat();
                 }
                 intersects[0].object.selected = 1;
-                $$$.selectedName = intersects[0].object.name;
+                $$$.selectedPortUUID = intersects[0].object.uuid;
             }
             //console.log(intersects[0])
         }
         else {
-            if ($$$.selectedName != "") {
-                $$$.attachNodeList[$$$.selectedName].selected = 0;
-                $$$.attachNodeList[$$$.selectedName].updateMat();
+            if ($$$.selectedPortUUID != "") {
+                $$$.attachNodeList[$$$.selectedPortUUID].selected = 0;
+                $$$.attachNodeList[$$$.selectedPortUUID].updateMat();
             }
-            $$$.selectedName = "";
+            $$$.selectedPortUUID = "";
         }
-        if ($$$.selectedName != "") $$$.attachNodeList[$$$.selectedName].updateMat();
+        if ($$$.selectedPortUUID != "") $$$.attachNodeList[$$$.selectedPortUUID].updateMat();
     }
     /**
      * Function for adding new module if available AttachNode is clicked.
      */
     var clickEvent = () => {
-        if ($$$.selectedName != "" && $$$.attachNodeList[$$$.selectedName].selected == 1) {
-            let npart = new Part($$$.selectedModule, $$$.attachNodeList[$$$.selectedName]);
+        if ($$$.selectedPortUUID != "" && $$$.attachNodeList[$$$.selectedPortUUID].selected&&!$$$.attachNodeList[$$$.selectedPortUUID].isOccupied) {
+            let npart = new Part($$$.selectedModule, $$$.attachNodeList[$$$.selectedPortUUID]);
             $$$.partN++;
+            $UI.text.partcount.innerHTML=`${$$$.partN} parts`
             //Original port
-            let originalPort = $$$.attachNodeList[$$$.selectedName]
+            let originalPort = $$$.attachNodeList[$$$.selectedPortUUID]
             //new port
             let newPort = npart.port[$$$.selectedPortID];
             originalPort.recalibrate();
             let u1 = originalPort.u.clone();
             let u2 = newPort.u.clone();
-            let rotA = u1.clone().cross(u2);
+            let rotA = u1.clone().cross(u2).normalize();
             //console.log(originalPort.pid)
             if (!(rotA.x == 0 && rotA.y == 0 && rotA.z == 0)) {
                 u1 = u1.negate().angleTo(u2);
-                _q1.setFromAxisAngle(rotA, u1);
+
+                _q1.setFromAxisAngle(rotA, u1).normalize();
+                console.log(u1/Math.PI*180,_q1.clone(),rotA.clone())
                 npart.rotate(_q1);
                 npart.mesh.applyQuaternion(_q1);
             }
@@ -470,10 +502,14 @@ lights_ext,1.0,1.0,1.0`
             } else {
                 rotA = originalPort.r.clone().cross(newPort.r);
             }
-            u1 = Math.PI - u1 + $$$.rotation / 180 * Math.PI
-            _q1.setFromAxisAngle(rotA, u1);
+            rotA.normalize();
+            u1 = Math.PI - u1
+            _q1.setFromAxisAngle(rotA, u1)
             npart.rotate(_q1);
             npart.mesh.applyQuaternion(_q1);
+            _q1.setFromAxisAngle(originalPort.u, $$$.rotation / 180 * Math.PI);
+            npart.rotate(_q1);
+            npart.mesh.applyQuaternion(_q1);            
             //originalPort.position+newPort.v.negate();
             npart.mesh.position.addVectors(originalPort.position, newPort.v.clone().negate());
             npart.recalibrate();

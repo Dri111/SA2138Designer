@@ -4,10 +4,10 @@
 
 <head>
     <title>Third</title>
-    <script type="text/javascript" src="../three.js-master/build/three.js"></script>
-    <script type="text/javascript" src="../three.js-master/examples/js/controls/TrackballControls.js"></script>
-    <script src="../three.js-master/examples/js/loaders/OBJLoader.js"></script>
-    <script src="../three.js-master/examples/js/loaders/MTLLoader.js"></script>
+    <script type="text/javascript" src="./threejs/three.min.js"></script>
+    <script type="text/javascript" src="./threejs/TrackballControls.js"></script>
+    <script src="./threejs/OBJLoader.js"></script>
+    <script src="./threejs/MTLLoader.js"></script>
     <style>
         body {
             /* set margin to 0 and overflow to hidden, to go fullscreen */
@@ -15,12 +15,11 @@
             overflow: hidden;
         }
     </style>
+    <meta charset="UTF-8">
 </head>
 
 <body>
 
-    <div id="Stats-output">
-    </div>
     <!-- Div which will hold the Output -->
     <div id="WebGL-output">
     </div>
@@ -30,7 +29,7 @@
                 <tr id="idsel-box">
                 </tr>
             </table>
-            <div id="angle-ui"><input type="range" min="0" max="100" id="angle-range"><span id="angle-text"></span></div>
+            <div id="angle-ui"><input type="range" min="0" max="8" id="angle-range"><span id="angle-text"></span></div>
             <div id="buttons">
                 <button id="button-blueprint">Blueprint</button>
             </div>
@@ -69,6 +68,13 @@
             </div>
             <div class="ui sub menu2" id="menu-2nd-ui" style="float:right" hidden>
             </div>
+        </div>
+        <div id="floating-ui">
+            <span id="display-partcount">0 parts</span>
+        </div>
+        <div id="blueprint-ui">
+            <textarea id="blueprint-output" cols="30" rows="10">Nothing</textarea>
+            <br><button id="blueprintoutput-cancel">Cancel</button>
         </div>
     </div>
     <style>
@@ -152,6 +158,22 @@
         div#buttons{
             grid-column: 3;
             grid-row: 1;
+        }
+        div#floating-ui{
+            position:fixed;
+            top: 0;
+            left:0;
+        }
+        div#blueprint-ui{
+            position:fixed;
+            display:none;
+            top:50%;
+            left:50%;
+        }
+        div#blueprint-ui textarea{
+            background-color:black;
+            color:white;
+            overflow: scroll;
         }
     </style>
     <!-- Javascript code that runs our Three.js examples -->
