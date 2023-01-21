@@ -19,6 +19,7 @@
 </head>
 
 <body>
+    <!--
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
@@ -41,7 +42,7 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
-    </script>
+    </script>-->
     <!-- Div which will hold the Output -->
     <div id="WebGL-output">
     </div>
@@ -65,7 +66,7 @@
                 <table>
                     <tr>
                         <td><button class="select-module" id="select-hub" value="Hub" state="selected">Hub</button></td>
-                        <td><button class="select-module" id="select-corridor" value="Station Module">Station
+                        <td><button class="select-module" id="select-stationmodule" value="Station Module">Station
                                 Module</button></td>
                         <td><button class="select-module" id="select-builder" value="Builder" disabled>Builder</button></td>
                         <td><button class="select-module" id="select-tug" value="Tug" disabled>Tug</button></td>
@@ -77,8 +78,8 @@
                     <tr>
                         <td><button class="select-module" id="select-caretaker" value="Caretaker" disabled>Caretaker</button>
                         </td>
-                        <td><button class="select-module" id="select-solarpanel" value="Solar Panel" disabled>Solar
-                                Panel</button></td>
+                        <td><button class="select-module" id="select-solarsquare" value="Solar Square">Solar
+                                Square</button></td>
                         <td><button class="select-module" id="select-jumpgate" value="Jump Gate" disabled>Jump Gate</button></td>
                         <td><button class="select-module" id="select-nucleargenerator" value="Nuclear Generator" disabled>Nuclear
                                 Generator</button></td>
