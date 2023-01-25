@@ -46,51 +46,106 @@
     <!-- Div which will hold the Output -->
     <div id="WebGL-output">
     </div>
-    <div>
+    <div id="ui-group">
         <div class="ui sub" id="upper-ui">
             <table id="select-portid">
                 <tr id="idsel-box">
                 </tr>
             </table>
-            <div id="angle-ui"><input type="range" min="0" max="8" id="angle-range"><span id="angle-text"></span></div>
+            <div id="angle-ui">Angle:<input type="range" min="0" max="8" id="angle-range"><span id="angle-text"></span></div>
             <div id="buttons">
                 <button id="button-blueprint">Blueprint</button>
+                <button id="button-delete">Attach Mode</button>
             </div>
         </div>
         <div class="ui" id="ui-menu">
-            <div class="ui sub" id="menu-selection-ui" style="float:left;">
-                <button class="button-sel" id="payload-sel">Payloads</button>
-                <button class="button-sel" id="2nd-sel">2nd Stages</button>
+            <div class="ui sub" id="menu-selection-ui" style="float:left;display:grid;">
+                <button class="button-sel" id="basic-sel" value="basic" style="grid-column: 1;grid-row: 1;">Basic</button>
+                <button class="button-sel" id="electricity-sel" value="electricity"style="grid-column: 2;grid-row: 1;">Electricity</button>
+                <button class="button-sel" id="storage-sel" value="storage"style="grid-column: 3;grid-row: 1;">Storage</button>
+                <button class="button-sel" id="manufacture-sel" value="manufacture"style="grid-column: 1;grid-row: 2;">Manufacture</button>
+                <button class="button-sel" id="spaceship-sel" value="spaceship"style="grid-column: 2;grid-row: 2;">Spaceship</button>
+                <button class="button-sel" id="etc-sel" value="etc" style="grid-column: 3;grid-row: 2;">Etc</button>
             </div>
-            <div class="ui sub menu2" id="menu-payload-ui" style="float:right">
+            <div class="ui sub menu2" id="menu-basic-ui" style="float:right">
                 <table>
                     <tr>
-                        <td><button class="select-module" id="select-hub" value="Hub" state="selected">Hub</button></td>
-                        <td><button class="select-module" id="select-stationmodule" value="Station Module">Station
-                                Module</button></td>
-                        <td><button class="select-module" id="select-builder" value="Builder" disabled>Builder</button></td>
-                        <td><button class="select-module" id="select-tug" value="Tug" disabled>Tug</button></td>
-                        <td><button class="select-module" id="select-crewhabit" value="Crew Habit" disabled>Crew Habit</button>
-                        </td>
-                        <td><button class="select-module" id="select-fuelsilosmall" value="Fuel Silo Small" disabled>Fuel Silo
-                                Small</button></td>
+                        <td><button class="select-module" id="select-hub" state="selected" style="border:3px solid red;">Hub</button></td>
+                        <td><button class="select-module" id="select-stationmodule">Station Module</button></td>
+                        <td><button class="select-module" id="select-superhub" disabled>Super Hub</button></td>
+                        <td><button class="select-module" id="select-truss" disabled>Truss</button></td>
                     </tr>
                     <tr>
-                        <td><button class="select-module" id="select-caretaker" value="Caretaker" disabled>Caretaker</button>
-                        </td>
-                        <td><button class="select-module" id="select-solarsquare" value="Solar Square">Solar
-                                Square</button></td>
-                        <td><button class="select-module" id="select-jumpgate" value="Jump Gate" disabled>Jump Gate</button></td>
-                        <td><button class="select-module" id="select-nucleargenerator" value="Nuclear Generator" disabled>Nuclear
-                                Generator</button></td>
-                        <td><button class="select-module" id="select-solarsquare" value="Solar Square" disabled>Solar
-                                Square</button></td>
-                        <td><button class="select-module" id="select-hydroponicsmodule"
-                                value="Hydroponics Module" disabled>Hydroponics Module</button></td>
+                        <td><button class="select-module" id="select-stationcorridor" disabled>Station Corridor</button></td>
+                        <td><button class="select-module" id="select-viewingdome" disabled>Viewing Dome</button></td>
+                        <td><button class="select-module" id="select-commandnucleus" disabled>Command Nucleus</button></td>
+                        <td><button class="select-module" id="select-commandnucleus2" disabled>Command Nucleus II</button></td>
                     </tr>
                 </table>
             </div>
-            <div class="ui sub menu2" id="menu-2nd-ui" style="float:right" hidden>
+            <div class="ui sub menu2" id="menu-electricity-ui" style="float:right" hidden>
+                <table>
+                    <tr>
+                        <td><button class="select-module" id="select-solarsmall" >Solar Panel Small</button></td>
+                        <td><button class="select-module" id="select-solarmedium" >Solar Panel Meduim</button></td>
+                        <td><button class="select-module" id="select-solarlarge" >Solar Panel Large</button></td>
+                        <td><button class="select-module" id="select-solarsquare" >Solar Square</button></td>
+                        <td><button class="select-module" id="select-solarocto" disabled>Solar Module Octo</button></td>
+                    </tr>
+                    <tr>
+                        <td><button class="select-module" id="select-batterybackup" disabled>Battery Backup</button></td>
+                        <td><button class="select-module" id="select-nucleargenerator" disabled>Nuclear Generator</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="ui sub menu2" id="menu-storage-ui" style="float:right" hidden>
+                <table>
+                    <tr>
+                        <td><button class="select-module" id="select-cargomod" disabled>Cargo Mod</button></td>
+                        <td><button class="select-module" id="select-fuelsilosmall" disabled>Fuel Silo Small</button></td>
+                        <td><button class="select-module" id="select-fuelsilolarge" disabled>Fuel Silo Large</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="ui sub menu2" id="menu-manufacture-ui" style="float:right" hidden>
+                <table>
+                    <tr>
+                <td><button class="select-module" id="select-fuelrefinery" disabled>Fuel Refinery</button></td>
+                <td><button class="select-module" id="select-hydroponicsmodule" disabled>Hydroponics Module</button></td>
+                <td><button class="select-module" id="select-moisturerecomod" disabled>Moisture Reco Mod</button></td>
+                </tr></table>
+            </div>
+            <div class="ui sub menu2" id="menu-spaceship-ui" style="float:right" hidden>
+                <table>
+                    <tr>
+                        <td><button class="select-module" id="select-resupplymodule"  disabled>Resupply Module</button></td>
+                        <td><button class="select-module" id="select-black"  disabled>Black</button></td>
+                        <td><button class="select-module" id="select-delta10"  disabled>Delta 10</button></td>
+                        <td><button class="select-module" id="select-deltablack"  disabled>Delta Black</button></td>
+                        <td><button class="select-module" id="select-builder2"  disabled>Builder II</button></td>
+                        <td><button class="select-module" id="select-basebuilder"  disabled>Base Builder</button></td>
+                    </tr>
+                    <tr>
+                        <td><button class="select-module" id="select-2ndthor"  disabled>2nd Stage Thor</button></td>
+                        <td><button class="select-module" id="select-2ndzeus"  disabled>2nd Stage Zeus</button></td>
+                        <td><button class="select-module" id="select-2ndjupiter"  disabled>2nd Stage Jupiter</button></td>
+                        <td><button class="select-module" id="select-2ndgoliath"  disabled>2nd Stage Goliath</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="ui sub menu2" id="menu-etc-ui" style="float:right;" hidden>
+                <table>
+                    <tr>
+                        <td><button class="select-module" id="select-tug"  disabled>Tug</button></td>
+                        <td><button class="select-module" id="select-satellite"  disabled>Satellite</button></td>
+                        <td><button class="select-module" id="select-builder"  disabled>Builder</button></td>
+                        <td><button class="select-module" id="select-jumpdrive"  disabled>Jump Drive</button></td>
+                        <td><button class="select-module" id="select-jumpgate"  disabled>Jump Gate</button></td>
+                        <td><button class="select-module" id="select-caretaker"  disabled>Caretaker</button></td>
+                        <td><button class="select-module" id="select-iondrive"  disabled>Ion Drive</button></td>
+                        <td><button class="select-module" id="select-ads"  disabled>ADS</button></td>
+                    </tr>
+                </table>
             </div>
         </div>
         <div id="floating-ui">
@@ -99,6 +154,47 @@
         <div id="blueprint-ui">
             <textarea id="blueprint-output" cols="30" rows="10">Nothing</textarea>
             <br><button id="blueprintoutput-cancel">Cancel</button>
+        </div>
+    </div>
+    <div id="front-screen">
+        <div id="front-window">
+<div>
+    <button onclick="document.getElementById(`front-screen`).style.display=`none`" style="font-size: 20px;font-weight: bolder;">&times;</button>
+    <h1>1.About</h1>
+    <p>This is a website for designing a station for the mobile game SA2138. <br>
+        Source code, and Basic Informtaions are at: <a href="https://github.com/Dri111/SA2138Designer" style="color:skyblue">Github</a>
+    </p>
+</div>
+<hr>
+<div>
+    <h1>2.How to use</h1>
+    <h2 style="color:rgb(0, 255, 21)">Attach Mode</h2>
+    <p>
+        Attach Mode is for placing new parts on the station. You can select the module you want in the menu below. When you click a button for the module, the [port ID menu]'s content gets updated. As every docking port has its ID, [port ID menu] is for deciding the port that you will use to attach. After that, clicking a yellow selector on the port of the module will result in attaching new module on that docking port.
+    </p>
+    <h2 style="color:red">Delete Mode</h2>
+    <p>
+        Delete Mode works as cutting a branch of the tree.
+        When delete mode, putting your mouse cursor on the module will highlight them. Clicking it,
+        that module and all the "branch" modules will be deleted. <br>
+        About the understanding of "branch" structure, you can think as the builder at the center is tree log,
+        and you are creating branches by placing new modules.
+    </p>
+    <h2>Blueprint</h2>
+    <p>
+        By clicking blueprint button, a text field with text filled in will appear. That text is a blueprint of your station.
+        Copy the content, and make sure the content goes into game with the way you want.
+    </p>
+</div>
+<hr>
+<div>
+    <h1>Etc</h1>
+    <p>
+        If you resized the window, please reload the website so that the ui can be resized as intended.
+    </p>
+</div>
+<hr>
+For any other questions, you can ask via Discord(Dri111#9099) at space agency server, or DM me.
         </div>
     </div>
     <style>
@@ -111,11 +207,35 @@
             flex-flow: column;
         }
 
+        div#front-screen{
+            position:fixed;
+            left:0;
+            top:0;
+            bottom:0;
+            right:0;
+            background-color:rgba(0,0,0,0.5);
+        }
+        div#front-window{
+            display:block;
+            margin:0 auto;
+            margin-top:40px;
+            width:70%;
+            height:80%;
+            background-color:black;
+            border:3px solid cyan;
+            border-radius: 5px;
+            overflow:scroll;
+        }
         div.ui {
-            width: 100%;
+            /* width: 100%; */
             border: 2px solid cyan;
         }
-
+        div#ui-group{
+            position:fixed;
+            display:block;
+            width:100%;
+            bottom:0;
+        }
         div#WebGL-output {
             flex: 0 1 auto;
         }
@@ -127,7 +247,7 @@
 
         div#menu-selection-ui {
             margin: 0;
-            width: 200px;
+            /* width: 300px; */
             height: 100%;
         }
 
@@ -156,6 +276,10 @@
             background-color: blue;
         }
 
+        button#button-delete {
+            background-color: rgb(0, 255, 21);
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -165,6 +289,8 @@
 
         div#upper-ui {
             display: grid;
+            max-height:200px;
+            width:100%;
             gap: 0px;
         }
 

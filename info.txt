@@ -13,3 +13,14 @@ portpos:1.12936
 Builder2::
 portF:width:portS:slope:height=0.63180019:1:0.146190691:0.2277769:2.2124263
 portpos:1.26919
+
+Solar Square
+portF:width=244.2:381.3
+PortS:height=40.5:382.8
+width:height=1.4:1.6
+panel:width=230.9:78.3
+panel:height:18:382.4
+1:1:0.142857142:0.617735642
+port:0.543223
+
+내적이 0

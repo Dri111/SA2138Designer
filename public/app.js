@@ -6,6 +6,19 @@ function randomName() {
     }
     return str.join("");
 }
+function cloneObject(obj) {
+    var clone = {};
+    for (var key in obj) {
+        if (typeof obj[key] == "object" && obj[key] != null) {
+            clone[key] = cloneObject(obj[key]);
+        } else {
+            clone[key] = obj[key];
+        }
+    }
+
+    return clone;
+}
+
 /**
  * For the ports
  * will be recieved via the position information of owner part.
@@ -28,11 +41,9 @@ function v3(x, y, z) {
     return new THREE.Vector3(x, y, z)
 }
 
-
-let partLoadingN = 3;
 let objLoader = new THREE.OBJLoader();
 let mtlLoader = new THREE.MTLLoader();
-
+var $$$;
 
 const partList = {
     RootPartBuilder: {
@@ -78,60 +89,104 @@ const partList = {
         M: "./Solar_Square.mtl",
         portAmount: 1,
         portPD: [Port(v3(-0.543223, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))]
+    },
+    SolarSmall: {
+        id: 6,
+        name: "SolarSmall",
+        G: "./Solar_Small.obj",
+        M: "./Solar_Small.mtl",
+        portAmount: 2,
+        portPD: [
+            Port(v3(0.81434, 0, 0), v3(1, 0, 0), v3(0, 1, 0)),
+            Port(v3(-0.81434, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))
+        ]
+    },
+    SolarMedium: {
+        id: 7,
+        name: "SolarMedium",
+        G: "./Solar_Medium.obj",
+        M: "./Solar_Medium.mtl",
+        portAmount: 2,
+        portPD: [
+            Port(v3(0.81434, 0, 0), v3(1, 0, 0), v3(0, 1, 0)),
+            Port(v3(-0.81434, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))
+        ]
+    },
+    SolarLarge: {
+        id: 8,
+        name: "SolarLarge",
+        G: "./Solar_Large.obj",
+        M: "./Solar_Large.mtl",
+        portAmount: 2,
+        portPD: [
+            Port(v3(0.81434, 0, 0), v3(1, 0, 0), v3(0, 1, 0)),
+            Port(v3(-0.81434, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))
+        ]
     }
 }
-function _loadMTL(name) {
+
+let moduleNameList=Object.keys(partList);
+function _loadMTL(name,n) {
 
     mtlLoader.load(partList[name].M, (material) => {
-        console.log("Loaded Material: ", name, material)
         material.preload();
-        _loadOBJ(name, material);
+        console.log("Loaded Material: ", name, material.materials)
+        _loadOBJ(name, material,n);
     },
         (xhr) => {
-            console.log(`Loading MTL of ${name}`, xhr);
+            //console.log(`Loading MTL of ${name}`, xhr);
         },
         (error) => {
             console.error("Error has Occured : ", error);
-            console.log(`Reloading ${name} MTL....`);
-            _loadMTL(name);
+            alert("Something went wrong while loading. Try reload?")
         }
     )
 }
-function _loadOBJ(name, material) {
+function _loadOBJ(name, material,n) {
     objLoader.setMaterials(material);
     objLoader.load(partList[name].G, (object) => {
-        console.log("Loaded: ", name, partLoadingN)
+        //console.log("Loaded: ", name, partLoadingN)
         partList[name].mesh = object.children[0].clone();
-        partLoadingN--;
-        if (partLoadingN == -1) {
+        partList[name].outlineMesh = object.children[0].clone();
+        partList[name].outlineMesh.scale.multiplyScalar(1.1);
+        partList[name].outlineMesh.material = []
+        for (const ind in partList[name].mesh.material) {
+            partList[name].outlineMesh.material.push(partList[name].mesh.material[ind].clone())
+            partList[name].outlineMesh.material[ind].color = new THREE.Color(0xff0000);
+            partList[name].outlineMesh.material[ind].side=THREE.BackSide
+        }
+        console.log(`${name}: `,partList[name].mesh,partList[name].outlineMesh)
+        n++
+        if(n<moduleNameList.length){
+            _loadMTL(moduleNameList[n],n)
+        }
+        else{
             main();
         }
     },
         (xhr) => {
-            console.log(`Loading OBJ of ${name}`, xhr);
+            //console.log(`Loading OBJ of ${name}`, xhr);
 
         },
         (error) => {
             console.error("Error has Occured : ", error);
-            console.log(`Reloading ${name} OBJ....`);
-            _loadMTL(name, material);
+            alert("Something went wrong while loading. Try reload?")
         }
     )
 }
-function _loadModule(name) {
-    _loadMTL(name);
-}
-function init() {
 
+//Staring the code
+function init() {
     objLoader.setPath("./asset/");
     mtlLoader.setPath("./asset/");
-    for (const modulename in partList) {
-        _loadModule(modulename)
-    }
+    _loadMTL(moduleNameList[0],0)
 }
+
+//Main Function of entire system
 function main() {
 
     var scene = new THREE.Scene();
+
     var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
     const _q1 = new THREE.Quaternion();
@@ -139,18 +194,20 @@ function main() {
     let RootPart;
 
 
-    let $$$ = {
-        W: window.innerWidth,
-        H: window.innerHeight * 0.9,
+    $$$ = {
+        W: Math.min(window.innerWidth,window.innerHeight),
+        H: Math.min(window.innerWidth,window.innerHeight),
         nMID: -1,
         partN: 0,
         selectedPortUUID: "",
+        selectedPartUUID: "",
         selectedModule: "Hub",
         selectedPortID: 0,
+        attachMode: 1,
         rotation: 0,
         /**@type {Part} */
         firstModule: undefined,
-        part: [],
+        part: {},
         _treeBuf: [],
         tree: () => {
             $$$._treeBuf = [];
@@ -188,7 +245,7 @@ lights_ext,1.0,1.0,1.0`
             hostPort.connected.part.visited = 0;
         },
         nodePart: null,
-        attachNodeList: { root_0: null },
+        attachNodeList: {},
         attachNodeArray: [],
         addNode: (node) => {
             $$$.attachNodeList[node.uuid] = node;
@@ -201,13 +258,16 @@ lights_ext,1.0,1.0,1.0`
             m2.port[p2ind].connect(m1.port[p1ind])
         }
     }
-
+    $$$.scene=scene
     let $UI = {
+        moduleCategory: ["basic", "electricity", "storage", "manufacture", "spaceship", "etc"],
         idSelectionBox: document.getElementById('idsel-box'),
         button: {
             moduleSelect: {},
+            moduleMenu: document.getElementsByClassName("button-sel"),
             blueprint: document.querySelector('button#button-blueprint'),
-            blueprintCancel: document.querySelector("button#blueprintoutput-cancel")
+            blueprintCancel: document.querySelector("button#blueprintoutput-cancel"),
+            deleteToggle: document.querySelector("button#button-delete")
         },
         range: {
             rotation: document.querySelector('input#angle-range')
@@ -220,6 +280,7 @@ lights_ext,1.0,1.0,1.0`
             blueprint: document.querySelector("div#blueprint-ui"),
             /** @type {HTMLDivElement} */
             canvas: document.querySelector("div#WebGL-output"),
+            moduleMenu: {},
         },
         textarea: {
             blueprint: document.querySelector("textarea#blueprint-output"),
@@ -240,13 +301,14 @@ lights_ext,1.0,1.0,1.0`
                     })
                 }
             }
+
             $UI.range.rotation.addEventListener('input', () => {
                 $$$.rotation = parseFloat($UI.range.rotation.value) * 45;
                 $UI.text.rotation.innerText = `${$$$.rotation}˚`
             })
             $UI.button.blueprint.addEventListener('click', () => {
                 if ($$$.partN > 0) {
-                    $UI.textarea.blueprint.innerHTML = $$$.tree();
+                    $UI.textarea.blueprint.value = $$$.tree();
                     $UI.uiGroup.blueprint.style.display = "block";
                 }
                 else {
@@ -256,6 +318,32 @@ lights_ext,1.0,1.0,1.0`
             $UI.button.blueprintCancel.addEventListener('click', () => {
                 $UI.uiGroup.blueprint.style.display = "none";
             })
+            $UI.button.deleteToggle.addEventListener('click', () => {
+                $$$.attachMode *= -1;
+                if ($$$.attachMode > 0) {
+                    $UI.button.deleteToggle.style.backgroundColor = 'rgb(0,255,21)'
+                    $UI.button.deleteToggle.innerText = "Attach Mode";
+                    $$$.selectedPartUUID = ""
+                }
+                else {
+                    $UI.button.deleteToggle.style.backgroundColor = "red";
+                    $UI.button.deleteToggle.innerText = "Delete Mode"
+                    $$$.selectedPortUUID = "";
+                }
+            })
+            for (const name of $UI.moduleCategory) {
+                $UI.uiGroup.moduleMenu[name] = document.getElementById(`menu-${name}-ui`);
+            }
+            for (const button of $UI.button.moduleMenu) {
+                button.addEventListener('click', () => {
+                    $UI.uiGroup.moduleMenu[button.value].style.display = "block";
+                    for (const name of $UI.moduleCategory) {
+                        if (name != button.value) {
+                            $UI.uiGroup.moduleMenu[name].style.display = "none";
+                        }
+                    }
+                })
+            }
         },
         selectButtonID: () => {
             //Nothing. yea nothing
@@ -267,6 +355,9 @@ lights_ext,1.0,1.0,1.0`
                 $UI.button.moduleSelect[$$$.selectedModule].state = "none";
                 $UI.button.moduleSelect[$$$.selectedModule].style.border = 'none';
             }
+        },
+        updatePartNumber:()=>{
+            $UI.text.partcount.innerHTML = `${$$$.partN} parts`
         }
     }
     $UI.init();
@@ -295,8 +386,9 @@ lights_ext,1.0,1.0,1.0`
             this.part = part;
             this.isSceneAddded = true;
             this.isRoot = false;
+            /** @type {AttachNode} */
             this.connected = null;
-            this.name = `${part.name}_${portID}`;
+            this.name = `${part.mesh.uuid}_${portID}`;
             this.recalibrate();
             //scene.add(new THREE.ArrowHelper(this.u,this.position,1,0xff0000))
             //this.visualize();
@@ -304,7 +396,11 @@ lights_ext,1.0,1.0,1.0`
 
         }
         calcColor() {
-            return new THREE.Color(`hsl(${this.pid * 30},100%,50%)`)
+            // return new THREE.Color(`hsl(${this.pid * 30},100%,50%)`)
+            return new THREE.Color(0xffff00);
+        }
+        addTo$$$() {
+            $$$.attachNodeList[this.uuid] = this;
         }
         visualize() {
             let uviewer = new THREE.ArrowHelper(this.u, this.position, 0.5);
@@ -323,7 +419,7 @@ lights_ext,1.0,1.0,1.0`
                         this.material.color.copy(this.calcColor())
                         break;
                     case 1:
-                        this.material.color.setHex(0x0000ff);
+                        this.material.color.setHex(0xa0a0ff);
                         break;
                     case 2:
                         this.material.color.setHex(0xff0000);
@@ -375,6 +471,15 @@ lights_ext,1.0,1.0,1.0`
             this.r.applyQuaternion(quaternion);
             this.recalibrate();
         }
+        remove(){
+            scene.remove(this);
+            delete $$$.attachNodeList[this.uuid]
+            if(this.isOccupied){
+                this.connected.part.connected[this.connected.pid]=-1;
+                this.connected.isOccupied=false;
+                delete this.connected.connected
+            }
+        }
     }
 
     class Part {
@@ -386,6 +491,7 @@ lights_ext,1.0,1.0,1.0`
          */
         constructor(partName, connected, name = randomName()) {
             this.mesh = partList[partName].mesh.clone();
+            this.outMesh = partList[partName].outlineMesh.clone();
             this.MID = $$$.nMID++;
             //super(new THREE.BoxGeometry(1, 1, 1),  new THREE.MeshLambertMaterial({ color: Math.floor(Math.random() * 0xffffff) }));
             //this.mesh.wireframe = true;
@@ -394,7 +500,10 @@ lights_ext,1.0,1.0,1.0`
             this.partInfo = partList[partName];
             /**@type {Part[]} */
             this.connected = [];
+            if (partName != "RootPartBuilder") this.parentPort = connected;
+            this.childPort = {};
             this.name = name;
+            this.selected = false;
             this.visited = false;
             /**@type {AttachNode[]} */
             this.port = [];
@@ -407,12 +516,30 @@ lights_ext,1.0,1.0,1.0`
             }
 
         }
+        remove() {
+            this.parentPort.isOccupied = false;
+            this.parentPort.updateMat();
+            for (const uuid in this.childPort) {
+                this.childPort[uuid].part.remove();
+            }
+            for (const port of this.port) {
+                port.remove();
+            }
+            delete $$$.part[this.mesh.uuid]
+            $$$.selectedPartUUID = ""
+            scene.remove(this.mesh);
+            scene.remove(this.outMesh);
+            $$$.partN--;
+            $UI.updatePartNumber();
+        }
         rotate(quaternion) {
             for (const port of this.port) {
                 port.rotate(quaternion);
             }
         }
         recalibrate() {
+            this.outMesh.setRotationFromEuler(this.mesh.rotation);
+            this.outMesh.position.copy(this.mesh.position);
             for (const port of this.port) {
                 port.recalibrate();
             }
@@ -427,13 +554,22 @@ lights_ext,1.0,1.0,1.0`
                 port.visualize()
             }
         }
+        updateMat() {
+            if (this.selected) {
+                scene.add(this.outMesh);
+            }
+            else {
+                scene.remove(this.outMesh);
+            }
+        }
         static init() {
             console.log("Generating...")
             RootPart = new Part("RootPartBuilder", null, "root");
-            $$$.attachNodeList.root_0 = RootPart.port[0];
-            $$$.attachNodeArray.push(RootPart.port[0]);
+            RootPart.port[0].addTo$$$();
             RootPart.port[0].makeRoot();
             RootPart.visited = true;
+            //RootPart.mesh.material[0].color = new THREE.Color(0xff5e00)
+            //RootPart.mesh.material[0].side = 2
             $UI.uiGroup.canvas.style.display = "block"
         }
     }
@@ -443,13 +579,13 @@ lights_ext,1.0,1.0,1.0`
 
 
 
-   
+
 
 
 
     var renderer = new THREE.WebGLRenderer();
-    renderer.setClearColor(new THREE.Color(0x000000));
-    renderer.setSize(window.innerWidth, window.innerHeight * 0.9);
+    renderer.setClearColor(new THREE.Color(0x202020));
+    renderer.setSize($$$.W,$$$.H);
     renderer.shadowMapEnabled = true;
     document.getElementById('WebGL-output').appendChild(renderer.domElement)
     camera.position.set(10, 10, 10);
@@ -476,83 +612,142 @@ lights_ext,1.0,1.0,1.0`
         let vector = new THREE.Vector3((e.clientX / $$$.W) * 2 - 1, -(e.clientY / $$$.H) * 2 + 1, 0.5);
         vector = vector.unproject(camera);
         let rc = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
-        let intersects = rc.intersectObjects($$$.attachNodeArray);
         //console.log($$$.selectedPortUUID)
-        if (intersects.length > 0) {
-            if (intersects[0].object.uuid != $$$.selectedPortUUID) {
+        if ($$$.attachMode > 0) {
+            let minPort;
+            let minDist = Infinity;
+            for (const portuuid in $$$.attachNodeList) {
+                let port = $$$.attachNodeList[portuuid];
+                let dist = rc.intersectObject(port)
+                if (dist.length > 0) {
+                    dist = dist[0].distance;
+                    if (dist < minDist) {
+                        minPort = port;
+                        minDist = dist;
+                    }
+                }
+            }
+            if (minPort) {
+                if (minPort.uuid != $$$.selectedPortUUID) {
+                    if ($$$.selectedPortUUID != "") {
+                        $$$.attachNodeList[$$$.selectedPortUUID].selected = 0;
+                        $$$.attachNodeList[$$$.selectedPortUUID].updateMat();
+                    }
+                    minPort.selected = 1;
+                    $$$.selectedPortUUID = minPort.uuid;
+                }
+                //console.log(intersects[0])
+            }
+            else {
                 if ($$$.selectedPortUUID != "") {
                     $$$.attachNodeList[$$$.selectedPortUUID].selected = 0;
                     $$$.attachNodeList[$$$.selectedPortUUID].updateMat();
                 }
-                intersects[0].object.selected = 1;
-                $$$.selectedPortUUID = intersects[0].object.uuid;
+                $$$.selectedPortUUID = "";
             }
-            //console.log(intersects[0])
+            if ($$$.selectedPortUUID != "") $$$.attachNodeList[$$$.selectedPortUUID].updateMat();
         }
         else {
-            if ($$$.selectedPortUUID != "") {
-                $$$.attachNodeList[$$$.selectedPortUUID].selected = 0;
-                $$$.attachNodeList[$$$.selectedPortUUID].updateMat();
+            let minPart;
+            let minDist = Infinity;
+            for (const partuuid in $$$.part) {
+                let part = $$$.part[partuuid];
+                let dist = rc.intersectObject(part.mesh)
+                if (dist.length > 0) {
+                    dist = dist[0].distance;
+                    if (dist < minDist) {
+                        minPart = part;
+                        minDist = dist;
+                    }
+                }
             }
-            $$$.selectedPortUUID = "";
+            if (minPart) {
+                if (minPart.mesh.uuid != $$$.selectedPartUUID) {
+                    if ($$$.selectedPartUUID != "") {
+                        $$$.part[$$$.selectedPartUUID].selected = 0;
+                        $$$.part[$$$.selectedPartUUID].updateMat();
+                    }
+                    minPart.selected = 1;
+                    $$$.selectedPartUUID = minPart.mesh.uuid;
+                    $$$.part[$$$.selectedPartUUID].updateMat();
+                }
+                //console.log(intersects[0])
+            }
+            else {
+                if ($$$.selectedPartUUID != "") {
+                    $$$.part[$$$.selectedPartUUID].selected = 0;
+                    $$$.part[$$$.selectedPartUUID].updateMat();
+                }
+                $$$.selectedPartUUID = "";
+            }
         }
-        if ($$$.selectedPortUUID != "") $$$.attachNodeList[$$$.selectedPortUUID].updateMat();
     }
     /**
      * Function for adding new module if available AttachNode is clicked.
      */
     var clickEvent = () => {
-        if ($$$.selectedPortUUID != "" && $$$.attachNodeList[$$$.selectedPortUUID].selected && !$$$.attachNodeList[$$$.selectedPortUUID].isOccupied) {
-            let npart = new Part($$$.selectedModule, $$$.attachNodeList[$$$.selectedPortUUID]);
-            $$$.partN++;
-            $UI.text.partcount.innerHTML = `${$$$.partN} parts`
-            //Original port
-            let originalPort = $$$.attachNodeList[$$$.selectedPortUUID]
-            //new port
-            let newPort = npart.port[$$$.selectedPortID];
-            originalPort.recalibrate();
-            let u1 = originalPort.u.clone();
-            let u2 = newPort.u.clone();
-            let rotA = u1.clone().cross(u2).normalize();
-            //console.log(originalPort.pid)
-            if (!(rotA.x == 0 && rotA.y == 0 && rotA.z == 0)) {
-                u1 = u1.negate().angleTo(u2);
+        if ($$$.attachMode > 0) {
+            if ($$$.selectedPortUUID != "" && $$$.attachNodeList[$$$.selectedPortUUID].selected && !$$$.attachNodeList[$$$.selectedPortUUID].isOccupied) {
+                let npart = new Part($$$.selectedModule, $$$.attachNodeList[$$$.selectedPortUUID]);
+                $$$.partN++;
 
-                _q1.setFromAxisAngle(rotA, u1).normalize();
-                console.log(u1 / Math.PI * 180, _q1.clone(), rotA.clone())
+                $UI.text.partcount.innerHTML = `${$$$.partN} parts`
+                let originalPort = $$$.attachNodeList[$$$.selectedPortUUID]
+                let newPort = npart.port[$$$.selectedPortID];
+                originalPort.recalibrate();
+                originalPort.part.childPort[newPort.part.mesh.uuid]=newPort;
+                $$$.part[npart.mesh.uuid] = npart;
+                let u1 = originalPort.u.clone();
+                let u2 = newPort.u.clone();
+                let rotA = u1.clone().cross(u2).normalize();
+                //console.log(originalPort.pid)
+                if (!(rotA.x == 0 && rotA.y == 0 && rotA.z == 0)) {
+                    u1 = u1.negate().angleTo(u2);
+
+                    _q1.setFromAxisAngle(rotA, u1).normalize();
+                    console.log(u1 / Math.PI * 180, _q1.clone(), rotA.clone())
+                    npart.rotate(_q1);
+                    npart.mesh.applyQuaternion(_q1);
+                }
+                else if (u1.equals(u2)) {
+                    _q1.setFromUnitVectors(u1, u2.negate());
+                    npart.rotate(_q1);
+                    npart.mesh.applyQuaternion(_q1)
+                }
+
+                npart.recalibrate();
+                u1 = originalPort.r.angleTo(newPort.r);
+                rotA = originalPort.r.clone().cross(newPort.r)
+                //console.log(u1)
+                if (rotA.x == 0 && rotA.y == 0 && rotA.z == 0) {
+                    rotA = newPort.u
+                }
+                rotA.normalize();
+                u1 = Math.PI - u1
+                _q1.setFromAxisAngle(rotA, u1)
                 npart.rotate(_q1);
                 npart.mesh.applyQuaternion(_q1);
-            }
-            else if (u1.equals(u2)) {
-                _q1.setFromUnitVectors(u1, u2.negate());
+                _q1.setFromAxisAngle(originalPort.u, $$$.rotation / 180 * Math.PI);
                 npart.rotate(_q1);
-                npart.mesh.applyQuaternion(_q1)
-            }
+                npart.mesh.applyQuaternion(_q1);
+                //originalPort.position+newPort.v.negate();
+                npart.mesh.position.addVectors(originalPort.position, newPort.v.clone().negate());
+                npart.recalibrate();
+                //npart.visualize();
+                if (originalPort.isRoot) {
+                    $$$.firstModule = npart;
+                }
+                originalPort.updateMat();
+                $$$.connectMod(originalPort.part, npart, originalPort.pid, $$$.selectedPortID);
 
-            npart.recalibrate();
-            u1 = originalPort.r.angleTo(newPort.r);
-            rotA = originalPort.r.clone().cross(newPort.r)
-            //console.log(u1)
-            if (rotA.x == 0 && rotA.y == 0 && rotA.z == 0) {
-                rotA = newPort.u
             }
-            rotA.normalize();
-            u1 = Math.PI - u1
-            _q1.setFromAxisAngle(rotA, u1)
-            npart.rotate(_q1);
-            npart.mesh.applyQuaternion(_q1);
-            _q1.setFromAxisAngle(originalPort.u, $$$.rotation / 180 * Math.PI);
-            npart.rotate(_q1);
-            npart.mesh.applyQuaternion(_q1);
-            //originalPort.position+newPort.v.negate();
-            npart.mesh.position.addVectors(originalPort.position, newPort.v.clone().negate());
-            npart.recalibrate();
-            npart.visualize();
-            if (originalPort.isRoot) {
-                $$$.firstModule = npart;
+        }
+        else {
+            if ($$$.selectedPartUUID != "") {
+                delete $$$.part[$$$.selectedPartUUID].parentPort.part.childPort[$$$.selectedPartUUID]
+                $$$.part[$$$.selectedPartUUID].remove();
+                
             }
-            $$$.connectMod(originalPort.part, npart, originalPort.pid, $$$.selectedPortID);
-
         }
     }
     function updateIDButton() {
@@ -582,7 +777,7 @@ lights_ext,1.0,1.0,1.0`
     light.position.set(100, 100, 100);
     scene.add(light);*/
     let light = new THREE.AmbientLight(0xffffff);
-    light.intensity = 1.5;
+    light.intensity = 2;
     scene.add(light);
 
 
