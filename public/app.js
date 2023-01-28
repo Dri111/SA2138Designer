@@ -122,7 +122,28 @@ const partList = {
             Port(v3(0.81434, 0, 0), v3(1, 0, 0), v3(0, 1, 0)),
             Port(v3(-0.81434, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))
         ]
-    }
+    },
+    SolarOcto: {
+        id:10,
+        name:"SolarOcto",
+        G:"./Solar_Octo.obj",
+        M:"./Solar_Octo.mtl",
+        portAmount:1,
+        portPD:[
+            Port(v3(0,-0.750531,0),v3(0,-1,0),v3(0,0,1))
+        ]
+    },
+    HydroponicsModule: {
+        id: 4,
+        name: "HydroponicsModule",
+        G: "./Hydroponics.obj",
+        M: "./Hydroponics.mtl",
+        portAmount: 2,
+        portPD: [
+            Port(v3(-1.12936, 0, 0), v3(-1, 0, 0), v3(0, -1, 0)),
+            Port(v3(1.12936, 0, 0), v3(1, 0, 0), v3(0, -1, 0)),
+        ],
+    },
 }
 
 let moduleNameList=Object.keys(partList);
