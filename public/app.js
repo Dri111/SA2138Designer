@@ -226,6 +226,9 @@ function main() {
         selectedPortID: 0,
         attachMode: 1,
         rotation: 0,
+        totalResource:[],
+        resourceLabel:["Aluminum","Titanium","Gold"],
+        leftoverMID:[],
         /**@type {Part} */
         firstModule: undefined,
         part: {},
@@ -277,6 +280,15 @@ lights_ext,1.0,1.0,1.0`
             m2.connected[p2ind] = m1;
             m1.port[p1ind].connect(m2.port[p2ind])
             m2.port[p2ind].connect(m1.port[p1ind])
+        },
+        resourceString(){
+            let str=""
+            for(const ind in $$$.totalResource){
+                if($$$.totalResource[ind]>0){
+                    str+=`${$$$.resourceLabel[ind]} : ${$$$.totalResource[ind]}\n`
+                }
+            }
+            return str;
         }
     }
     $$$.scene=scene
@@ -513,7 +525,11 @@ lights_ext,1.0,1.0,1.0`
         constructor(partName, connected, name = randomName()) {
             this.mesh = partList[partName].mesh.clone();
             this.outMesh = partList[partName].outlineMesh.clone();
-            this.MID = $$$.nMID++;
+            if($$$.leftoverMID.length>0){
+                this.MID=$$$.leftoverMID.pop();
+            }else{
+                this.MID=$$$.nMID++;
+            }
             //super(new THREE.BoxGeometry(1, 1, 1),  new THREE.MeshLambertMaterial({ color: Math.floor(Math.random() * 0xffffff) }));
             //this.mesh.wireframe = true;
             //this.material.uniformsNeedUpdate=true;
@@ -540,6 +556,7 @@ lights_ext,1.0,1.0,1.0`
         remove() {
             this.parentPort.isOccupied = false;
             this.parentPort.updateMat();
+            $$$.leftoverMID.push(this.MID);
             for (const uuid in this.childPort) {
                 this.childPort[uuid].part.remove();
             }
