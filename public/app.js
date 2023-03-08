@@ -44,7 +44,16 @@ function v3(x, y, z) {
 let objLoader = new THREE.OBJLoader();
 let mtlLoader = new THREE.MTLLoader();
 var $$$;
-
+const GameInfo={
+    resPrice:{
+        Aluminum:25,
+        Iron:10,
+        Titanium:40,
+        Gold:50,
+        Silicon:15,
+        Carbon:5
+    }
+}
 const partList = {
     RootPartBuilder: {
         id: -1,
@@ -54,7 +63,10 @@ const partList = {
         portAmount: 1,
         portPD: [
             Port(v3(1.26919, 0, 0), v3(1, 0, 0), v3(0, 1, 0))
-        ]
+        ],
+        resource:{
+            
+        }
     },
     Hub: {
         id: 2,
@@ -70,6 +82,14 @@ const partList = {
             Port(v3(0, 0.5, 0), v3(0, 1, 0), v3(-1, 0, 0)),
             Port(v3(0, -0.5, 0), v3(0, -1, 0), v3(-1, 0, 0))
         ],
+        resource:{
+            "Aluminum":1000,
+            "Iron":250,
+            "Titanium":100,
+            "Gold":50,
+            "Silicon":100,
+            "Carbon":175
+        }
     },
     StationModule: {
         id: 3,
@@ -81,6 +101,14 @@ const partList = {
             Port(v3(-1.12936, 0, 0), v3(-1, 0, 0), v3(0, -1, 0)),
             Port(v3(1.12936, 0, 0), v3(1, 0, 0), v3(0, -1, 0)),
         ],
+        resource:{
+            "Aluminum":1500,
+            "Iron":250,
+            "Titanium":200,
+            "Gold":75,
+            "Silicon":150,
+            "Carbon":100
+        }
     },
     SolarSquare: {
         id: 9,
@@ -88,7 +116,13 @@ const partList = {
         G: "./Solar_Square.obj",
         M: "./Solar_Square.mtl",
         portAmount: 1,
-        portPD: [Port(v3(-0.543223, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))]
+        portPD: [Port(v3(-0.543223, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))],
+        resource:{
+            "Aluminum":100,
+            "Titanium":50,
+            "Gold":10,
+            "Silicon":800,
+        }
     },
     SolarSmall: {
         id: 6,
@@ -99,7 +133,13 @@ const partList = {
         portPD: [
             Port(v3(0.81434, 0, 0), v3(1, 0, 0), v3(0, 1, 0)),
             Port(v3(-0.81434, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))
-        ]
+        ],
+        resource:{
+            "Aluminum":100,
+            "Titanium":50,
+            "Gold":10,
+            "Silicon":200,
+        }
     },
     SolarMedium: {
         id: 7,
@@ -110,7 +150,13 @@ const partList = {
         portPD: [
             Port(v3(0.81434, 0, 0), v3(1, 0, 0), v3(0, 1, 0)),
             Port(v3(-0.81434, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))
-        ]
+        ],
+        resource:{
+            "Aluminum":100,
+            "Titanium":50,
+            "Gold":10,
+            "Silicon":400,
+        }
     },
     SolarLarge: {
         id: 8,
@@ -121,7 +167,13 @@ const partList = {
         portPD: [
             Port(v3(0.81434, 0, 0), v3(1, 0, 0), v3(0, 1, 0)),
             Port(v3(-0.81434, 0, 0), v3(-1, 0, 0), v3(0, 1, 0))
-        ]
+        ],
+        resource:{
+            "Aluminum":100,
+            "Titanium":50,
+            "Gold":10,
+            "Silicon":600,
+        }
     },
     SolarOcto: {
         id:10,
@@ -131,7 +183,13 @@ const partList = {
         portAmount:1,
         portPD:[
             Port(v3(0,-0.750531,0),v3(0,-1,0),v3(0,0,1))
-        ]
+        ],
+        resource:{
+            "Aluminum":100,
+            "Titanium":50,
+            "Gold":10,
+            "Silicon":1600,
+        }
     },
     HydroponicsModule: {
         id: 4,
@@ -143,6 +201,14 @@ const partList = {
             Port(v3(-1.12936, 0, 0), v3(-1, 0, 0), v3(0, -1, 0)),
             Port(v3(1.12936, 0, 0), v3(1, 0, 0), v3(0, -1, 0)),
         ],
+        resource:{
+            "Aluminum":1700,
+            "Iron":250,
+            "Titanium":400,
+            "Gold":100,
+            "Silicon":150,
+            "Carbon":250
+        }
     },
 }
 
@@ -226,8 +292,14 @@ function main() {
         selectedPortID: 0,
         attachMode: 1,
         rotation: 0,
-        totalResource:[],
-        resourceLabel:["Aluminum","Titanium","Gold"],
+        totalResource:{
+            Aluminum:0,
+            Iron:0,
+            Titanium:0,
+            Gold:0,
+            Silicon:0,
+            Carbon:0
+        },
         leftoverMID:[],
         /**@type {Part} */
         firstModule: undefined,
@@ -292,6 +364,9 @@ lights_ext,1.0,1.0,1.0`
         }
     }
     $$$.scene=scene
+    for(let i=0;i<$$$.totalResource.length;i++){
+        $$$.totalResource[i]=0;
+    }
     let $UI = {
         moduleCategory: ["basic", "electricity", "storage", "manufacture", "spaceship", "etc"],
         idSelectionBox: document.getElementById('idsel-box'),
@@ -314,6 +389,15 @@ lights_ext,1.0,1.0,1.0`
             /** @type {HTMLDivElement} */
             canvas: document.querySelector("div#WebGL-output"),
             moduleMenu: {},
+            resourceRow:{
+                Aluminum:document.querySelector('tr#resource-Aluminum'),
+                Iron:document.querySelector('tr#resource-Iron'),
+                Titanium:document.querySelector('tr#resource-Titanium'),
+                Gold:document.querySelector('tr#resource-Gold'),
+                Silicon:document.querySelector('tr#resource-Silicon'),
+                Carbon:document.querySelector('tr#resource-Carbon'),
+                Total:document.querySelector('tr#resource-Total')
+            }
         },
         textarea: {
             blueprint: document.querySelector("textarea#blueprint-output"),
@@ -389,8 +473,18 @@ lights_ext,1.0,1.0,1.0`
                 $UI.button.moduleSelect[$$$.selectedModule].style.border = 'none';
             }
         },
-        updatePartNumber:()=>{
+        updatePanelUI:()=>{
             $UI.text.partcount.innerHTML = `${$$$.partN} parts`
+        },
+        updateUI:()=>{
+            let total=0;
+            $UI.updatePanelUI();
+            for(const res in $$$.totalResource){
+                $UI.uiGroup.resourceRow[res].cells[1].innerHTML=$$$.totalResource[res];
+                $UI.uiGroup.resourceRow[res].cells[2].innerHTML=$$$.totalResource[res]*GameInfo.resPrice[res];
+                total+=$$$.totalResource[res]*GameInfo.resPrice[res];
+            }
+            $UI.uiGroup.resourceRow.Total.cells[2].innerHTML=total;
         }
     }
     $UI.init();
@@ -535,6 +629,9 @@ lights_ext,1.0,1.0,1.0`
             //this.material.uniformsNeedUpdate=true;
             //this.material.needsUpdate=true;
             this.partInfo = partList[partName];
+            for(const res in this.partInfo.resource){
+                $$$.totalResource[res]+=this.partInfo.resource[res]
+            }
             /**@type {Part[]} */
             this.connected = [];
             if (partName != "RootPartBuilder") this.parentPort = connected;
@@ -551,12 +648,15 @@ lights_ext,1.0,1.0,1.0`
                 $$$.addNode(this.port[i]);
 
             }
-
+            $UI.updateUI();
         }
         remove() {
             this.parentPort.isOccupied = false;
             this.parentPort.updateMat();
             $$$.leftoverMID.push(this.MID);
+            for(const res in this.partInfo.resource){
+                $$$.totalResource[res]-=this.partInfo.resource[res]
+            }
             for (const uuid in this.childPort) {
                 this.childPort[uuid].part.remove();
             }
@@ -568,7 +668,7 @@ lights_ext,1.0,1.0,1.0`
             scene.remove(this.mesh);
             scene.remove(this.outMesh);
             $$$.partN--;
-            $UI.updatePartNumber();
+            $UI.updateUI();
         }
         rotate(quaternion) {
             for (const port of this.port) {
